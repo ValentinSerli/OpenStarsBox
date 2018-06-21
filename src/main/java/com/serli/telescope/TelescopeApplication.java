@@ -43,8 +43,23 @@ public class TelescopeApplication {
 
 		FileOutputStream fos = null;
 		File idRasp = new File(".openstars");
-		System.out.println("Chemin du fichier : " + idRasp.getAbsolutePath());
-		{
+		idRasp.createNewFile();
+		System.out.println("/id Chemin du fichier : " + idRasp.getAbsolutePath());
+//        System.out.println("Droit en écriture : " + idRasp.canWrite());
+//        System.out.println("droit en lecture : " + idRasp.canRead());
+//        System.out.println("Path du fichier : " + idRasp.getPath());
+//
+//        idRasp.setExecutable(true);
+//        idRasp.setReadable(true);
+//        idRasp.setWritable(true);
+//
+//        System.out.println("Droit en écriture : " + idRasp.canWrite());
+//        System.out.println("droit en lecture : " + idRasp.canRead());
+
+		if (!idRasp.exists())
+        {
+            System.out.println("Erreur lors de la création du fichier");
+        } else {
             try {
                 BufferedReader br = new BufferedReader(new FileReader(idRasp));
                 String readId = br.readLine();
@@ -67,7 +82,8 @@ public class TelescopeApplication {
                 e.printStackTrace();
             }
         }
-        return "hello";
+
+        return "Erreur lors de la création du fichier";
 	}
 
 	@RequestMapping("/")
@@ -91,10 +107,11 @@ public class TelescopeApplication {
     }
 
     @RequestMapping(method = RequestMethod.GET, value = "/register/{id}")
-    public String recupId(@PathVariable("id") String id){
+    public String recupId(@PathVariable("id") String id) throws IOException {
         FileOutputStream fos = null;
         File idRasp = new File(".openstars");
-        System.out.println("Chemin du fichier : " + idRasp.getAbsolutePath());
+//        idRasp.createNewFile();
+        System.out.println("/register Chemin du fichier : " + idRasp.getAbsolutePath());
         System.out.println(id);
 
         if (!idRasp.exists())
@@ -114,7 +131,7 @@ public class TelescopeApplication {
                 System.out.println("Le fichier existe déjà, voici ce qu'il contient");
                 BufferedReader br = new BufferedReader(new FileReader(idRasp));
                 String readId = br.readLine();
-                System.out.println("ID : " + readId);
+                System.out.println("/register ID : " + readId);
 //                return "<title>ID</title>" + "<h2>" + readId + "</h2>";
             } catch (IOException e) {
                 e.printStackTrace();

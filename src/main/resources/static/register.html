@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <link rel="stylesheet" type="text/css" href="css/connexion.css"/>
-    <title>Hello</title>
+    <title>Enregistrement</title>
     <script type="text/javascript" src="js/connexion.js"></script>
 </head>
 <body>
@@ -11,8 +11,10 @@
 <h3 class="ConnexionHide" id="Connexion">Erreur lors de la saisie de l'adresse mail ou du mot de passe</h3>
 <h3 class="ConnexionHide" id="ID">Erreur l'ID est déjà généré, reportez vous à la page /id</h3>
 <form>
-    Adresse mail : <input type="text" name="mail" id="mail"><br>
-    Mot de passe : <input type="password" name="password" id="password"><br>
+    <p class="texte">Adresse mail :</p>
+    <input type="text" name="mail" id="mail"><br>
+    <p class="texte">Mot de passe :</p>
+    <input type="password" name="password" id="password"><br>
     <input type="button" onclick="validForm()" value="Valider">
 </form>
 </body>

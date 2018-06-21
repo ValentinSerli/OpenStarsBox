@@ -31,8 +31,13 @@ div {
 
 .title {
     text-align: center;
+    font-family: 'DejaVu Sans', Arial, sans-serif;
 }
 
+.texte {
+    font-family: 'DejaVu Sans', Arial, Helvetica, sans-serif;
+    margin-bottom: 0em;
+}
 .ConnexionHide {
     color: #cd0004;
     text-align: center;

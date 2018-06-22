@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.view.RedirectView;
 
 import java.io.*;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.concurrent.ExecutionException;
 
 @EnableScheduling
@@ -24,7 +26,7 @@ public class TelescopeApplication {
 
     private static org.slf4j.Logger logger = LoggerFactory.getLogger(WebSocketConfiguration.class);
 
-	public static void main(String[] args) throws ExecutionException, InterruptedException {
+	public static void main(String[] args) throws ExecutionException, InterruptedException, UnknownHostException {
 
 
 //		logger.info("Subscribing to greeting topic using session " + stompSession);
@@ -34,6 +36,9 @@ public class TelescopeApplication {
 		ListenableFuture<StompSession> f = webSocketConfiguration.connect();
 		StompSession stompSession = f.get();
 		webSocketConfiguration.subscribeGreetings(stompSession);
+
+        String ip = InetAddress.getLocalHost().getHostAddress().toString();
+        System.out.println("Votre IP est : " + ip);
 
 
 	}
@@ -45,16 +50,6 @@ public class TelescopeApplication {
 		File idRasp = new File(".openstars");
 		idRasp.createNewFile();
 		System.out.println("/id Chemin du fichier : " + idRasp.getAbsolutePath());
-//        System.out.println("Droit en écriture : " + idRasp.canWrite());
-//        System.out.println("droit en lecture : " + idRasp.canRead());
-//        System.out.println("Path du fichier : " + idRasp.getPath());
-//
-//        idRasp.setExecutable(true);
-//        idRasp.setReadable(true);
-//        idRasp.setWritable(true);
-//
-//        System.out.println("Droit en écriture : " + idRasp.canWrite());
-//        System.out.println("droit en lecture : " + idRasp.canRead());
 
 		if (!idRasp.exists())
         {

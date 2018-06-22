@@ -40,7 +40,6 @@ public class TelescopeApplication {
         String ip = InetAddress.getLocalHost().getHostAddress().toString();
         System.out.println("Votre IP est : " + ip);
 
-
 	}
 
 	@RequestMapping("/id")

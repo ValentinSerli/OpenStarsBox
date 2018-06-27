@@ -7,35 +7,21 @@ import com.serli.telescope.manager.CamManager;
 import com.serli.telescope.manager.TelescopeManager;
 import com.serli.telescope.repo.CoordonneeRepo;
 import com.serli.telescope.repo.ImageRepo;
-import com.serli.telescope.serie.comSerie;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.MediaType;
-import org.springframework.messaging.converter.ByteArrayMessageConverter;
-import org.springframework.messaging.simp.stomp.StompFrameHandler;
-import org.springframework.messaging.simp.stomp.StompHeaders;
-import org.springframework.messaging.simp.stomp.StompSession;
-import org.springframework.messaging.simp.stomp.StompSessionHandlerAdapter;
-import org.springframework.scheduling.TaskScheduler;
+import org.springframework.messaging.simp.stomp.*;
 import org.springframework.util.concurrent.ListenableFuture;
 import org.springframework.web.socket.WebSocketHttpHeaders;
-import org.springframework.web.socket.client.WebSocketClient;
 import org.springframework.web.socket.client.standard.StandardWebSocketClient;
-import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
-import org.springframework.web.socket.config.annotation.WebSocketTransportRegistration;
 import org.springframework.web.socket.messaging.WebSocketStompClient;
 import org.springframework.web.socket.sockjs.client.SockJsClient;
 import org.springframework.web.socket.sockjs.client.Transport;
 import org.springframework.web.socket.sockjs.client.WebSocketTransport;
 import org.springframework.web.socket.sockjs.frame.Jackson2SockJsMessageCodec;
 
-import javax.websocket.ContainerProvider;
-import javax.websocket.WebSocketContainer;
 import java.lang.reflect.Type;
-import java.util.Base64;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 
 @Configuration
@@ -57,18 +43,26 @@ public class WebSocketConfiguration {
     @Autowired
     public CamManager camManager;
 
+    public Timer timer = new Timer();
+
+    private SockJsClient sockJsClient;
+
+    private WebSocketStompClient stompClient;
+
+    private String url = "ws://{host}:{port}/socket";
+
     public ListenableFuture<StompSession> connect() {
 
         Transport webSocketTransport = new WebSocketTransport(new StandardWebSocketClient());
         List<Transport> transports = Collections.singletonList(webSocketTransport);
 
-        SockJsClient sockJsClient = new SockJsClient(transports);
+        sockJsClient = new SockJsClient(transports);
         sockJsClient.setMessageCodec(new Jackson2SockJsMessageCodec());
 
-        WebSocketStompClient stompClient = new WebSocketStompClient(sockJsClient);
+        stompClient = new WebSocketStompClient(sockJsClient);
         stompClient.setInboundMessageSizeLimit(Integer.MAX_VALUE);
 
-        String url = "ws://{host}:{port}/socket";
+//        String url = "ws://{host}:{port}/socket";
         return stompClient.connect(url, headers, new MyHandler(), "192.168.86.105", 8080);
 
     }
@@ -82,12 +76,28 @@ public class WebSocketConfiguration {
             }
 
             public void handleFrame(StompHeaders stompHeaders, Object o) {
+                System.out.println("Connecter : " + stompSession.isConnected());
+                if (!stompSession.isConnected()) {
+                    System.out.println("Déconnecter");
+                    System.out.println("Tentative de connexion dans 4 seconde...");
+                    try {
+                        Thread.sleep(2000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    System.out.println("2 seconde...");
+                    try {
+                        Thread.sleep(2000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    connect();
+                }
                 logger.info("Received request " + new String((byte[]) o));
                 logger.info("Taille du StompHeaders : " + stompHeaders.size());
                 Coordonnees coord = coordonneeRepo.findByNomPlanete(new String((byte[]) o));
                 Image image = new Image();
-                if (coord != null)
-                {
+                if (coord != null) {
                     logger.info("Demande acceptee : " + coord.getNomPlanete());
 
                     try {
@@ -117,7 +127,7 @@ public class WebSocketConfiguration {
                             Image save = imageRepo.save(image);
                             coordonneeRepo.save(coord);
                             Integer fini = 1;
-                            stompSession.send("/app/receive", new byte[] {save.getIdImage().byteValue()});
+                            stompSession.send("/app/receive", new byte[]{save.getIdImage().byteValue()});
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
@@ -130,8 +140,52 @@ public class WebSocketConfiguration {
     }
 
     private class MyHandler extends StompSessionHandlerAdapter {
+        @Override
         public void afterConnected(StompSession stompSession, StompHeaders stompHeaders) {
-            logger.info("Now connected");
+            logger.info("Now Connected");
+        }
+
+        @Override
+        public void handleException(StompSession stompSession, StompCommand stompCommand, StompHeaders stompHeaders, byte[] bytes, Throwable throwable) {
+        }
+
+
+        @Override
+        public void handleTransportError(StompSession stompSession, Throwable throwable) {
+            if (throwable instanceof ConnectionLostException) {
+                ListenableFuture<StompSession> connect = stompClient.connect(url, headers, this, "192.168.86.105", 8080);
+
+                System.out.println("Déconnecter");
+                timer.schedule(new TimerTask() {
+                    @Override
+                    public void run() {
+                        System.out.println("Thread lancer");
+                        try {
+                            ListenableFuture<StompSession> connect = stompClient.connect(url, headers, new MyHandler(), "192.168.86.105", 8080);
+                            System.out.println("Tentative de reconnexion");
+                            StompSession stompSession1 = connect.get();
+                            System.out.println("connecter : " + stompSession1.isConnected());
+                            subscribeGreetings(stompSession1);
+                            System.out.println("Reconnexion réussi");
+                            timer.cancel();
+                            Thread.currentThread().interrupt();
+                            timer = new Timer();
+                        } catch (Exception e) {
+                            System.out.println("Echec reconnexion");
+                            e.printStackTrace();
+                        }
+                    }
+                }, 3000, 3000);
+            }
+        }
+
+        @Override
+        public Type getPayloadType(StompHeaders stompHeaders) {
+            return null;
+        }
+
+        @Override
+        public void handleFrame(StompHeaders stompHeaders, Object o) {
         }
     }
 }

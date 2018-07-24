@@ -5,6 +5,7 @@ import com.serli.telescope.data.Etat;
 import com.serli.telescope.data.Image;
 import com.serli.telescope.manager.CamManager;
 import com.serli.telescope.manager.TelescopeManager;
+import com.serli.telescope.manager.TokenManager;
 import com.serli.telescope.repo.CoordonneeRepo;
 import com.serli.telescope.repo.ImageRepo;
 import org.slf4j.LoggerFactory;
@@ -43,6 +44,9 @@ public class WebSocketConfiguration {
     @Autowired
     public CamManager camManager;
 
+    @Autowired
+    public TokenManager tokenManager;
+
     public Timer timer = new Timer();
 
     private SockJsClient sockJsClient;
@@ -62,8 +66,10 @@ public class WebSocketConfiguration {
         stompClient = new WebSocketStompClient(sockJsClient);
         stompClient.setInboundMessageSizeLimit(Integer.MAX_VALUE);
 
-//        String url = "ws://{host}:{port}/socket";
-        return stompClient.connect(url, headers, new MyHandler(), "192.168.86.105", 8080);
+        System.out.println("token dans getToken : " + tokenManager.getToken());
+        headers.add("token", tokenManager.getToken());
+
+        return stompClient.connect(url, headers, new MyHandler(), "192.168.86.87", 8080);
 
     }
 
@@ -72,7 +78,6 @@ public class WebSocketConfiguration {
 
             public Type getPayloadType(StompHeaders stompHeaders) {
                 return Object.class;
-//                return byte[].class;
             }
 
             public void handleFrame(StompHeaders stompHeaders, Object o) {
@@ -153,15 +158,12 @@ public class WebSocketConfiguration {
         @Override
         public void handleTransportError(StompSession stompSession, Throwable throwable) {
             if (throwable instanceof ConnectionLostException) {
-                ListenableFuture<StompSession> connect = stompClient.connect(url, headers, this, "192.168.86.105", 8080);
-
                 System.out.println("Déconnecter");
                 timer.schedule(new TimerTask() {
                     @Override
                     public void run() {
-                        System.out.println("Thread lancer");
                         try {
-                            ListenableFuture<StompSession> connect = stompClient.connect(url, headers, new MyHandler(), "192.168.86.105", 8080);
+                            ListenableFuture<StompSession> connect = stompClient.connect(url, headers, new MyHandler(), "192.168.86.87", 8080);
                             System.out.println("Tentative de reconnexion");
                             StompSession stompSession1 = connect.get();
                             System.out.println("connecter : " + stompSession1.isConnected());

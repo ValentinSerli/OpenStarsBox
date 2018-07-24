@@ -1,7 +1,9 @@
 package com.serli.telescope;
 
 import com.serli.telescope.config.WebSocketConfiguration;
+import com.serli.telescope.manager.TokenManager;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ConfigurableApplicationContext;
@@ -21,24 +23,28 @@ import java.util.concurrent.ExecutionException;
 @SpringBootApplication
 @Controller
 @RestController
-@CrossOrigin(origins = "http://192.168.86.105:8080")
+@CrossOrigin(origins = "http://192.168.86.87:8080")
 public class TelescopeApplication {
+
+    @Autowired
+    public TokenManager tokenManager;
+
+    public static WebSocketConfiguration webSocketConfiguration;
 
     private static org.slf4j.Logger logger = LoggerFactory.getLogger(WebSocketConfiguration.class);
 
 	public static void main(String[] args) throws ExecutionException, InterruptedException, UnknownHostException {
 
-
-//		logger.info("Subscribing to greeting topic using session " + stompSession);
-
 		ConfigurableApplicationContext context = SpringApplication.run(TelescopeApplication.class, args);
-		WebSocketConfiguration webSocketConfiguration = context.getBean(WebSocketConfiguration.class);
-		ListenableFuture<StompSession> f = webSocketConfiguration.connect();
-		StompSession stompSession = f.get();
-		webSocketConfiguration.subscribeGreetings(stompSession);
+//		WebSocketConfiguration webSocketConfiguration = context.getBean(WebSocketConfiguration.class);
+        webSocketConfiguration = context.getBean(WebSocketConfiguration.class);
+//        System.out.println("token enregistrer : " + tokenManager.getToken());
+//		ListenableFuture<StompSession> f = webSocketConfiguration.connect();
+//		StompSession stompSession = f.get();
+//		webSocketConfiguration.subscribeGreetings(stompSession);
 
-        String ip = InetAddress.getLocalHost().getHostAddress().toString();
-        System.out.println("Votre IP est : " + ip);
+//        String ip = InetAddress.getLocalHost().getHostAddress().toString();
+//        System.out.println("Votre IP est : " + ip);
 
 	}
 
@@ -67,6 +73,7 @@ public class TelescopeApplication {
                         "text-align: center" +
                         "}" +
                         "</style>" +
+                        "<h2 class=\"id\">Connexion réussi</h2>" +
                         "<h2 class=\"id\">" + readId + "</h2>" +
                         "<h3 class=\"id\">Système d'exploitation : " + osName + "<h3>" +
                         "<h3 class=\"id\">Version du système : " + osVersion + "<h3>" +
@@ -79,6 +86,16 @@ public class TelescopeApplication {
 
         return "Erreur lors de la création du fichier";
 	}
+
+	@RequestMapping(method = RequestMethod.GET, value = "/token/{id}")
+    public String token(@PathVariable("id") String token) throws ExecutionException, InterruptedException {
+        tokenManager.setToken(token);
+        System.out.println("token reçu : " + tokenManager.getToken());
+        ListenableFuture<StompSession> f = webSocketConfiguration.connect();
+		StompSession stompSession = f.get();
+		webSocketConfiguration.subscribeGreetings(stompSession);
+        return token;
+    }
 
 	@RequestMapping("/")
     public RedirectView firstConnect(){
@@ -104,7 +121,6 @@ public class TelescopeApplication {
     public String recupId(@PathVariable("id") String id) throws IOException {
         FileOutputStream fos = null;
         File idRasp = new File(".openstars");
-//        idRasp.createNewFile();
         System.out.println("/register Chemin du fichier : " + idRasp.getAbsolutePath());
         System.out.println(id);
 
@@ -116,7 +132,6 @@ public class TelescopeApplication {
                 PrintWriter pWriter = new PrintWriter(bw);
                 pWriter.print(id + "\n");
                 pWriter.close();
-//                return "<title>ID</title>" + "<h2>" + id.toString() + "</h2>";
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -126,7 +141,6 @@ public class TelescopeApplication {
                 BufferedReader br = new BufferedReader(new FileReader(idRasp));
                 String readId = br.readLine();
                 System.out.println("/register ID : " + readId);
-//                return "<title>ID</title>" + "<h2>" + readId + "</h2>";
             } catch (IOException e) {
                 e.printStackTrace();
             }

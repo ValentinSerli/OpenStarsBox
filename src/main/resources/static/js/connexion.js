@@ -1,33 +1,47 @@
 
 function validForm(){
-    fetch("http://192.168.86.105:8080/identification/check", {
+    var adresse = "http://192.168.86.87:8080";
+
+    fetch(adresse + "/login", {
         method: "POST",
         body: JSON.stringify({
-            mail:document.getElementById("mail").value,
+            email: document.getElementById("mail").value,
             password: document.getElementById("password").value,
         }),
-        headers:{
-            'Access-Control-Allow-Origin': 'http://192.168.86.105:8080',
+        headers: {
+            'Access-Control-Allow-Origin': "http://192.168.86.87:8080",
             'Content-Type': 'application/json'
         }
     }).then((response) => {
-        return response.text();
-        console.log(response.text());
-    }).then(ID => {
-        getUserIP(function(ip){
-            fetch("http://" + ip + ":8082/register/" + ID);
-            console.log(ID);
-            if (ID == "Erreur lors de la saisie de l'identifiant ou du mot de passe"){
-                document.getElementById("ID").className = "ConnexionHide";
-                document.getElementById("Connexion").className = "Connexion";
-
-            } else if (ID == "ID déjà saisie"){
-                document.getElementById("Connexion").className = "ConnexionHide";
-                document.getElementById("ID").className = "Connexion";
-            } else {
-                sleep(250);
-                window.location.href = "http://" + ip + ":8082/id";
+        console.log("token : " + response.headers.get("token"));
+        var token = response.headers.get("token");
+        if (response.status === 403){
+            document.getElementById("Connexion").className = "Connexion";
+            return;
+        }
+        fetch(adresse + "/identification/check", {
+            method: "POST",
+            body: JSON.stringify({
+                mail:document.getElementById("mail").value,
+                password: document.getElementById("password").value,
+            }),
+            headers:{
+                'Access-Control-Allow-Origin': adresse,
+                'Content-Type': 'application/json',
+                'token': token
             }
+        }).then((response) => {
+            return response.text();
+            console.log(response.text());
+        }).then(ID => {
+            // getUserIP(function(ip){
+                fetch("/register/" + ID);
+                console.log(ID);
+                fetch("/token/" + token);
+
+                sleep(250);
+                // window.location.href = "/id";
+            // })
         })
     })
 }

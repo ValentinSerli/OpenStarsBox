@@ -9,7 +9,7 @@ function validForm(){
             password: document.getElementById("password").value,
         }),
         headers: {
-            'Access-Control-Allow-Origin': "http://192.168.86.87:8080",
+            'Access-Control-Allow-Origin': adresse,
             'Content-Type': 'application/json'
         }
     }).then((response) => {
@@ -34,14 +34,12 @@ function validForm(){
             return response.text();
             console.log(response.text());
         }).then(ID => {
-            // getUserIP(function(ip){
-                fetch("/register/" + ID);
-                console.log(ID);
-                fetch("/token/" + token);
+            fetch("/register/" + ID);
+            console.log(ID);
+            fetch("/token/" + token);
 
-                sleep(250);
-                // window.location.href = "/id";
-            // })
+            sleep(350);
+            window.location.href = "/id";
         })
     })
 }

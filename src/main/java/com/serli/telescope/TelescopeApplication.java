@@ -5,8 +5,13 @@ import com.serli.telescope.manager.TokenManager;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
+import org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration;
+import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration;
 import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.stomp.StompSession;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.stereotype.Controller;
@@ -15,7 +20,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.view.RedirectView;
 
 import java.io.*;
-import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.concurrent.ExecutionException;
 
@@ -23,6 +27,8 @@ import java.util.concurrent.ExecutionException;
 @SpringBootApplication
 @Controller
 @RestController
+@Configuration
+@EnableAutoConfiguration(exclude = {DataSourceAutoConfiguration.class, DataSourceTransactionManagerAutoConfiguration.class, HibernateJpaAutoConfiguration.class})
 @CrossOrigin(origins = "http://192.168.86.87:8080")
 public class TelescopeApplication {
 
@@ -31,20 +37,14 @@ public class TelescopeApplication {
 
     public static WebSocketConfiguration webSocketConfiguration;
 
+    private StompSession stompSession;
+
     private static org.slf4j.Logger logger = LoggerFactory.getLogger(WebSocketConfiguration.class);
 
 	public static void main(String[] args) throws ExecutionException, InterruptedException, UnknownHostException {
 
 		ConfigurableApplicationContext context = SpringApplication.run(TelescopeApplication.class, args);
-//		WebSocketConfiguration webSocketConfiguration = context.getBean(WebSocketConfiguration.class);
         webSocketConfiguration = context.getBean(WebSocketConfiguration.class);
-//        System.out.println("token enregistrer : " + tokenManager.getToken());
-//		ListenableFuture<StompSession> f = webSocketConfiguration.connect();
-//		StompSession stompSession = f.get();
-//		webSocketConfiguration.subscribeGreetings(stompSession);
-
-//        String ip = InetAddress.getLocalHost().getHostAddress().toString();
-//        System.out.println("Votre IP est : " + ip);
 
 	}
 
@@ -92,7 +92,7 @@ public class TelescopeApplication {
         tokenManager.setToken(token);
         System.out.println("token reçu : " + tokenManager.getToken());
         ListenableFuture<StompSession> f = webSocketConfiguration.connect();
-		StompSession stompSession = f.get();
+        stompSession = f.get();
 		webSocketConfiguration.subscribeGreetings(stompSession);
         return token;
     }
@@ -100,8 +100,11 @@ public class TelescopeApplication {
 	@RequestMapping("/")
     public RedirectView firstConnect(){
         File idRasp = new File(".openstars");
-	    if (idRasp.exists()){
-	        return new RedirectView("/id");
+        if (stompSession != null){
+            if (!stompSession.isConnected()){
+                return new RedirectView("/id");
+            }
+            return new RedirectView("/id");
         } else {
             return new RedirectView("/register");
         }
@@ -110,7 +113,10 @@ public class TelescopeApplication {
     @RequestMapping("/register")
     public RedirectView register(){
         File idRasp = new File(".openstars");
-        if (idRasp.exists()){
+        if (stompSession != null){
+            if (!stompSession.isConnected()){
+                return new RedirectView("/id");
+            }
             return new RedirectView("/id");
         } else {
             return new RedirectView("register.html");
@@ -137,9 +143,19 @@ public class TelescopeApplication {
             }
         } else {
             try {
-                System.out.println("Le fichier existe déjà, voici ce qu'il contient");
+                System.out.println("Le fichier existe déjà, voici ce qu'il contient :");
                 BufferedReader br = new BufferedReader(new FileReader(idRasp));
                 String readId = br.readLine();
+                if (!readId.equals(id))
+                {
+                    System.out.println("Erreur : Les ID ne sont pas identique");
+                    idRasp.delete();
+                    File newIdRasp = new File(".openstars");
+                    BufferedWriter bw = new BufferedWriter(new FileWriter(newIdRasp));
+                    PrintWriter pWriter = new PrintWriter(bw);
+                    pWriter.print(id + "\n");
+                    pWriter.close();
+                }
                 System.out.println("/register ID : " + readId);
             } catch (IOException e) {
                 e.printStackTrace();

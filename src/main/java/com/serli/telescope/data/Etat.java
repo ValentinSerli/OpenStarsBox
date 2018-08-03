@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
 
 
 public enum Etat {
-    TRAITEE(1),PASTRAITEE(0), ACCEPTEE(2);
+    TRAITEE(1),PASTRAITEE(0), ACCEPTEE(2), ERREURRECEPTION(3), ERREURMOVE(4), ERREURGENERAL(5);
     private Integer code;
 
     @JsonValue

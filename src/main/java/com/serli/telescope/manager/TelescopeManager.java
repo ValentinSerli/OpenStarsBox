@@ -1,11 +1,9 @@
 package com.serli.telescope.manager;
 
-import com.github.sarxos.webcam.ds.fswebcam.FsWebcamDriver;
 import com.serli.telescope.serie.comSerie;
 
 import java.io.IOException;
 
-import com.github.sarxos.webcam.Webcam;
 import org.springframework.stereotype.Component;
 
 /**
@@ -35,7 +33,7 @@ public class TelescopeManager {
 	 * @throws InterruptedException
 	 */
 
-	public void move(String planete, String coord) throws Exception {
+	public int move(String planete, String coord) throws Exception {
 		boolean finDeplacement = false;
 		byte[] buffer = new byte[1024];
 		String retour = "L\n";
@@ -50,6 +48,9 @@ public class TelescopeManager {
 					{
 						reponseCoord += (char) buffer[0];
 						retourCoordComplet=reponseCoord.endsWith("#");
+						if (!reponseCoord.endsWith("#")){
+							return 2;
+						}
 					} else Thread.sleep(500);
 				}
 				System.out.println("reponse coord : "+reponseCoord);
@@ -65,6 +66,9 @@ public class TelescopeManager {
 						{
 							reponse += (char) buffer[0];
 							retourComplet=reponse.endsWith("#");
+							if (!reponse.endsWith("#")){
+								return 3;
+							}
 						} else Thread.sleep(500);
 					}
 					System.out.println("reponse interrogation depl : "+reponse);
@@ -80,5 +84,6 @@ public class TelescopeManager {
 			catch (IOException e) {
 				throw new Exception("Erreur lors du mouvement du telescope");
 			}
+		return 1;
 	}
 }

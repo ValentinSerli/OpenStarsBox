@@ -45,7 +45,7 @@ public class WebSocketConfiguration {
 
     private String url = "ws://{host}:{port}/socket";
 
-    private String uri = "192.168.86.87";
+    private String uri = "192.168.86.119";
 
     public ListenableFuture<StompSession> connect() {
 
@@ -70,8 +70,15 @@ public class WebSocketConfiguration {
         {
             System.out.println("Headers présent : " + header[i]);
         }
+        System.out.println("Token dans connectHeaders : " + connectHeaders.get("token"));
         return stompClient.connect(url, headers, connectHeaders, new MyHandler(), uri, 8080);
 
+    }
+
+    public ListenableFuture<StompSession> disconnect() {
+        stompClient.stop();
+        sockJsClient.stop();
+        return null;
     }
 
     public void subscribeGreetings(StompSession stompSession) throws ExecutionException, InterruptedException {
@@ -86,6 +93,7 @@ public class WebSocketConfiguration {
 
                 StompHeaders sendHeaders = new StompHeaders();
                 sendHeaders.add("token", tokenManager.getToken());
+                System.out.println("Token dans sendHeaders : " + sendHeaders.get("token"));
                 sendHeaders.setDestination("/app/move/etat");
 
                 StompHeaders imageHeaders = new StompHeaders();

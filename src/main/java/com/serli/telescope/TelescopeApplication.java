@@ -29,7 +29,7 @@ import java.util.concurrent.ExecutionException;
 @RestController
 @Configuration
 @EnableAutoConfiguration(exclude = {DataSourceAutoConfiguration.class, DataSourceTransactionManagerAutoConfiguration.class, HibernateJpaAutoConfiguration.class})
-@CrossOrigin(origins = "http://192.168.86.87:8080")
+@CrossOrigin(origins = "http://192.168.86.119:8080")
 public class TelescopeApplication {
 
     @Autowired
@@ -73,12 +73,21 @@ public class TelescopeApplication {
                         "text-align: center" +
                         "}" +
                         "</style>" +
+                        "<script> function deconnexion(){" +
+                        "fetch(\"/deconnexion\")" +
+                        ".then((response) => {\n" +
+                        "            console.log(response.text());" +
+                        "            window.location.href = \"/register.html\";" +
+                        "})" +
+                        "}" +
+                        "</script>" +
                         "<h2 class=\"id\">Connexion réussi</h2>" +
                         "<h2 class=\"id\">" + readId + "</h2>" +
-                        "<h3 class=\"id\">Système d'exploitation : " + osName + "<h3>" +
-                        "<h3 class=\"id\">Version du système : " + osVersion + "<h3>" +
-                        "<h3 class=\"id\">Architecture du système : " + osArch + "<h3>" +
-                        "<h3 class=\"id\">Version Java : " + versionJava + "<h3>";
+                        "<h3 class=\"id\">Système d'exploitation : " + osName + "</h3>" +
+                        "<h3 class=\"id\">Version du système : " + osVersion + "</h3>" +
+                        "<h3 class=\"id\">Architecture du système : " + osArch + "</h3>" +
+                        "<h3 class=\"id\">Version Java : " + versionJava + "</h3>" +
+                        "<h3 class=\"id\"><button onClick=\"deconnexion()\">Deconnexion</button></h3>";
             } catch (FileNotFoundException e){
                 e.printStackTrace();
             }
@@ -86,6 +95,20 @@ public class TelescopeApplication {
 
         return "Erreur lors de la création du fichier";
 	}
+
+	@RequestMapping(method = RequestMethod.GET, value = "/deconnexion")
+    public String deconnexion(){
+	    tokenManager.setToken("");
+	    stompSession.disconnect();
+	    webSocketConfiguration.disconnect();
+	    stompSession = null;
+	    if (stompSession != null){
+            if (stompSession.isConnected()){
+                System.out.println("Erreur : Encore connecter");
+            }
+        }
+	    return "deconnexion";
+    }
 
 	@RequestMapping(method = RequestMethod.GET, value = "/token/{id}")
     public String token(@PathVariable("id") String token) throws ExecutionException, InterruptedException {

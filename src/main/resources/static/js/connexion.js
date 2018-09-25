@@ -1,47 +1,67 @@
 
 function validForm(){
     var adresse = "http://192.168.86.119:8080";
+    var mail = document.getElementById("mail");
+    var password = document.getElementById("password");
 
-    fetch(adresse + "/login", {
-        method: "POST",
-        body: JSON.stringify({
-            email: document.getElementById("mail").value,
-            password: document.getElementById("password").value,
-        }),
-        headers: {
-            'Access-Control-Allow-Origin': adresse,
-            'Content-Type': 'application/json'
-        }
-    }).then((response) => {
-        console.log("token : " + response.headers.get("token"));
-        var token = response.headers.get("token");
-        if (response.status === 403){
-            document.getElementById("Connexion").className = "Connexion";
-            return;
-        }
-        fetch(adresse + "/identification/check", {
+    if (mail.value.trim() === "")
+    {
+        mail.focus();
+        document.getElementById("ErreurMail").className = "ErreurMail";
+        document.getElementById("ErreurPassword").className = "ConnexionHide";
+        return;
+    }
+
+    if (password.value.trim() === ""){
+        password.focus();
+        document.getElementById("ErreurPassword").className = "ErreurPassword";
+        document.getElementById("ErreurMail").className = "ConnexionHide";
+        return;
+    }
+
+    if (mail.value.trim() !== "" && password.value.trim() !== "")
+    {
+        fetch(adresse + "/login", {
             method: "POST",
             body: JSON.stringify({
-                mail:document.getElementById("mail").value,
+                email: document.getElementById("mail").value,
                 password: document.getElementById("password").value,
             }),
-            headers:{
+            headers: {
                 'Access-Control-Allow-Origin': adresse,
-                'Content-Type': 'application/json',
-                'token': token
+                'Content-Type': 'application/json'
             }
         }).then((response) => {
-            return response.text();
-            console.log(response.text());
-        }).then(ID => {
-            fetch("/register/" + ID);
-            console.log(ID);
-            fetch("/token/" + token);
+            console.log("token : " + response.headers.get("token"));
+            var token = response.headers.get("token");
+            if (response.status === 403){
+                document.getElementById("Connexion").className = "Connexion";
+                return;
+            }
+            fetch(adresse + "/identification/check", {
+                method: "POST",
+                body: JSON.stringify({
+                    mail:document.getElementById("mail").value,
+                    password: document.getElementById("password").value,
+                }),
+                headers:{
+                    'Access-Control-Allow-Origin': adresse,
+                    'Content-Type': 'application/json',
+                    'token': token
+                }
+            }).then((response) => {
+                return response.text();
+                console.log(response.text());
+            }).then(ID => {
+                fetch("/register/" + ID);
+                console.log(ID);
+                fetch("/token/" + token);
 
-            sleep(350);
-            window.location.href = "/id";
-        })
-    })
+                sleep(350);
+                window.location.href = "/id";
+                })
+            })
+    }
 }
 
 function sleep(milliseconds) {

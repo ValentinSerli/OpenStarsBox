@@ -13,6 +13,7 @@ input[type=button] {
     background-color: #4CAF50;
     color: white;
     padding: 14px 20px;
+    font-size: 18px;
     margin: 8px 0;
     border: none;
     border-radius: 4px;
@@ -38,6 +39,7 @@ div {
     font-family: 'DejaVu Sans', Arial, Helvetica, sans-serif;
     margin-bottom: 0em;
 }
+
 .ConnexionHide {
     color: #cd0004;
     text-align: center;
@@ -45,6 +47,16 @@ div {
 }
 
 .Connexion {
+    color: #cd0004;
+    text-align: center;
+}
+
+.ErreurMail {
+    color: #cd0004;
+    text-align: center;
+}
+
+.ErreurPassword {
     color: #cd0004;
     text-align: center;
 }

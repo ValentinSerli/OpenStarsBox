@@ -72,6 +72,16 @@ public class TelescopeApplication {
                         "<style>.id{" +
                         "text-align: center" +
                         "}" +
+                        ".button{" +
+                        "background-color: #cd0004;\n" +
+                        "    color: white;\n" +
+                        "    font-size: 18px;" +
+                        "    padding: 14px 20px;\n" +
+                        "    margin: 8px 0;\n" +
+                        "    border: none;\n" +
+                        "    border-radius: 4px;\n" +
+                        "    cursor: pointer;" +
+                        "}" +
                         "</style>" +
                         "<script> function deconnexion(){" +
                         "fetch(\"/deconnexion\")" +
@@ -87,7 +97,7 @@ public class TelescopeApplication {
                         "<h3 class=\"id\">Version du système : " + osVersion + "</h3>" +
                         "<h3 class=\"id\">Architecture du système : " + osArch + "</h3>" +
                         "<h3 class=\"id\">Version Java : " + versionJava + "</h3>" +
-                        "<h3 class=\"id\"><button onClick=\"deconnexion()\">Deconnexion</button></h3>";
+                        "<h3 class=\"id\"><button class=\"button\" onClick=\"deconnexion()\">Deconnexion</button></h3>";
             } catch (FileNotFoundException e){
                 e.printStackTrace();
             }

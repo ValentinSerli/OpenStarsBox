@@ -1,5 +1,7 @@
 package com.serli.telescope.config;
 
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.interfaces.DecodedJWT;
 import com.serli.telescope.data.Coordonnees;
 import com.serli.telescope.manager.CamManager;
 import com.serli.telescope.manager.TelescopeManager;
@@ -47,6 +49,8 @@ public class WebSocketConfiguration {
 
     private String uri = "192.168.86.119";
 
+    public String mail;
+
     public ListenableFuture<StompSession> connect() {
 
         Transport webSocketTransport = new WebSocketTransport(new StandardWebSocketClient());
@@ -70,6 +74,15 @@ public class WebSocketConfiguration {
         {
             System.out.println("Headers présent : " + header[i]);
         }
+        String token = tokenManager.getToken();
+
+//        String base64Url = token.split(".")[0];
+//        String base64 = base64Url.replace('-', '+').replace('_', '/');
+//        logger.info(base64);
+        DecodedJWT jwt = JWT.decode(token);
+        mail = jwt.getClaim("sub").asString();
+        logger.info(jwt.getClaim("sub").asString());
+
         System.out.println("Token dans connectHeaders : " + connectHeaders.get("token"));
         return stompClient.connect(url, headers, connectHeaders, new MyHandler(), uri, 8080);
 
@@ -102,43 +115,91 @@ public class WebSocketConfiguration {
 
                 logger.info("Taille du StompHeaders : " + stompHeaders.size());
                 String messageRecu = new String((byte[]) o);
+                logger.info("Message Reçu : " + messageRecu);
                 Coordonnees coord = new Coordonnees();
-                String coordonnee = messageRecu.split("&")[0];
-                String planete = messageRecu.split("&")[1];
-                logger.info("Coordonnée reçu : " + coordonnee);
-                logger.info("Planete reçu : " + planete);
+                String checkRequest = messageRecu.split("&")[0];
+                String coordonnee;
+                String planete;
+                String user;
+                if (checkRequest.equals("photo")){
+                    coordonnee = messageRecu.split("&")[0];
+                    user = messageRecu.split("&")[1];
+                    logger.info("Message reçu : " + coordonnee);
+                    logger.info("Demande de l'utilisateur : " + user);
+                } else {
+                    coordonnee = messageRecu.split("&")[0];
+                    planete = messageRecu.split("&")[1];
+                    user = messageRecu.split("&")[2];
+                    logger.info("Coordonnée reçu : " + coordonnee);
+                    logger.info("Planete reçu : " + planete);
+                    logger.info("Demande de l'utilisateur : " + user);
+                    coord.setCoord(coordonnee);
+                    coord.setNomPlanete(planete);
+                    logger.info("Requete reçu pour : " + coord.getNomPlanete());
+                }
 
-                coord.setCoord(coordonnee);
-                coord.setNomPlanete(planete);
-
-                logger.info("Requete reçu pour : " + coord.getNomPlanete());
-                if (coord != null) {
-                    logger.info("Demande acceptee : " + coord.getNomPlanete());
-
-                    try {
+                if (!user.equals(mail))
+                {
+                    logger.info("Les mail ne corresponde pas !");
+                    Integer userID = Integer.parseInt(user);
+                    Integer erreurMail = 6;
+                    stompSession.send(sendHeaders, new byte[]{erreurMail.byteValue(), userID.byteValue()});
+                } else if (user.equals(mail)) {
+                    Integer userID = Integer.parseInt(user);
+                    logger.info("Les mail corresponde");
+                    if (coord.getNomPlanete() != null && coord.getCoord() != null) {
+                        logger.info("Demande acceptee : " + coord.getNomPlanete());
                         try {
-                            logger.info("Traitement manager : " + coord.getNomPlanete());
+                            try {
+                                logger.info("Traitement manager : " + coord.getNomPlanete());
 //                            int retour = telescopeManager.move(coord.getNomPlanete(), coord.getCoord());
-                            int retour = 2;
-                            switch (retour){
-                                case 0:
-                                    Integer erreurGeneral = 5;
-                                    stompSession.send(sendHeaders, new byte[]{erreurGeneral.byteValue()});
-                                    break;
-                                case 1:
-                                    Integer requeteTraitee = 1;
-                                    stompSession.send(sendHeaders, new byte[]{requeteTraitee.byteValue()});
-                                    break;
-                                case 2:
-                                    Integer erreurReception = 3;
-                                    stompSession.send(sendHeaders, new byte[]{erreurReception.byteValue()});
-                                    break;
-                                case 3:
-                                    Integer erreurMove = 4;
-                                    stompSession.send(sendHeaders, new byte[]{erreurMove.byteValue()});
-                                    break;
+                                int retour = 2;
+                                switch (retour){
+                                    case 0:
+                                        Integer erreurGeneral = 5;
+                                        stompSession.send(sendHeaders, new byte[]{erreurGeneral.byteValue(), userID.byteValue()});
+                                        break;
+                                    case 1:
+                                        Integer requeteTraitee = 1;
+                                        stompSession.send(sendHeaders, new byte[]{requeteTraitee.byteValue(), userID.byteValue()});
+//                                        byte[] picture = camManager.takePicture();
+                                        byte[] picture2 = new byte[10];
+                                        picture2[1] = 12;
+                                        picture2[2] = 56;
+                                        picture2[3] = 48;
+                                        picture2[4] = 63;
+                                        picture2[5] = 120;
+                                        byte[] encoded = Base64.getEncoder().encode(picture2);
+                                        logger.info("Envoie de l'image");
+
+                                        logger.info("Taille de l'image 2 : " + encoded.length);
+                                        logger.info("Connecter au WebSocket : " + stompSession.isConnected());
+
+                                        logger.info("Image envoyée");
+                                        stompSession.send(imageHeaders, encoded);
+                                        logger.info("Mise à jour de l'état");
+                                        break;
+                                    case 2:
+                                        Integer erreurReception = 3;
+                                        stompSession.send(sendHeaders, new byte[]{erreurReception.byteValue(), userID.byteValue()});
+                                        break;
+                                    case 3:
+                                        Integer erreurMove = 4;
+                                        stompSession.send(sendHeaders, new byte[]{erreurMove.byteValue(), userID.byteValue()});
+                                        break;
+                                }
+
+                            } catch (Exception e) {
+                                e.printStackTrace();
                             }
-//                            byte[] picture = camManager.takePicture();
+                        } catch (Exception e) {
+                            Integer error = 5;
+                            e.printStackTrace();
+                            stompSession.send("/app/move/etat", new byte[]{error.byteValue()});
+                        }
+                    } else if (coordonnee.equals("photo")){
+                        logger.info("demande de photo reçu");
+                        try {
                             byte[] picture2 = new byte[10];
                             picture2[1] = 12;
                             picture2[2] = 56;
@@ -146,22 +207,12 @@ public class WebSocketConfiguration {
                             picture2[4] = 63;
                             picture2[5] = 120;
                             byte[] encoded = Base64.getEncoder().encode(picture2);
-                            logger.info("Envoie de l'image");
-
-                            logger.info("Taille de l'image 2 : " + encoded.length);
-                            logger.info("Connecter au WebSocket : " + stompSession.isConnected());
-
-                            logger.info("Image envoyée");
+//                        byte[] picture = camManager.takePicture();
+//                        byte[] encoded = Base64.getEncoder().encode(picture);
                             stompSession.send(imageHeaders, encoded);
-                            logger.info("Mise à jour de l'état");
-
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
-                    } catch (Exception e) {
-                        Integer error = 5;
-                        e.printStackTrace();
-                        stompSession.send("/app/move/etat", new byte[]{error.byteValue()});
                     }
                 }
             }

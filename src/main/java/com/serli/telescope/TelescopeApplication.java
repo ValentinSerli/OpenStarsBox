@@ -92,7 +92,7 @@ public class TelescopeApplication {
                         "}" +
                         "</script>" +
                         "<h2 class=\"id\">Connexion réussi</h2>" +
-                        "<h2 class=\"id\">" + readId + "</h2>" +
+                        "<h2 class=\"id\">ID : " + readId + "</h2>" +
                         "<h3 class=\"id\">Système d'exploitation : " + osName + "</h3>" +
                         "<h3 class=\"id\">Version du système : " + osVersion + "</h3>" +
                         "<h3 class=\"id\">Architecture du système : " + osArch + "</h3>" +

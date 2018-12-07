@@ -2,6 +2,7 @@ package com.serli.telescope;
 
 import com.serli.telescope.config.WebSocketConfiguration;
 import com.serli.telescope.manager.TokenManager;
+import com.serli.telescope.serie.comSerie;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
@@ -41,10 +42,15 @@ public class TelescopeApplication {
 
     private static org.slf4j.Logger logger = LoggerFactory.getLogger(WebSocketConfiguration.class);
 
-	public static void main(String[] args) throws ExecutionException, InterruptedException, UnknownHostException {
+	public static void main(String[] args) throws Exception {
 
 		ConfigurableApplicationContext context = SpringApplication.run(TelescopeApplication.class, args);
         webSocketConfiguration = context.getBean(WebSocketConfiguration.class);
+        /**
+         * Connexion au port série
+         */
+        comSerie comSerie = new comSerie();
+        comSerie.connect("/dev/ttyUSB0");
 
 	}
 
@@ -54,11 +60,11 @@ public class TelescopeApplication {
 		FileOutputStream fos = null;
 		File idRasp = new File(".openstars");
 		idRasp.createNewFile();
-		System.out.println("/id Chemin du fichier : " + idRasp.getAbsolutePath());
+		logger.info("/id Chemin du fichier : " + idRasp.getAbsolutePath());
 
 		if (!idRasp.exists())
         {
-            System.out.println("Erreur lors de la création du fichier");
+            logger.info("Erreur lors de la création du fichier");
         } else {
             try {
                 BufferedReader br = new BufferedReader(new FileReader(idRasp));
@@ -67,7 +73,7 @@ public class TelescopeApplication {
                 String osVersion = System.getProperty("os.version");
                 String osArch = System.getProperty("os.arch");
                 String versionJava = System.getProperty("java.version");
-                System.out.println("ID : " + readId);
+                logger.info("ID : " + readId);
                 return "<title>ID</title>" +
                         "<style>.id{" +
                         "text-align: center" +
@@ -114,7 +120,7 @@ public class TelescopeApplication {
 	    stompSession = null;
 	    if (stompSession != null){
             if (stompSession.isConnected()){
-                System.out.println("Erreur : Encore connecter");
+                logger.info("Erreur : Encore connecter");
             }
         }
 	    return "deconnexion";
@@ -123,7 +129,7 @@ public class TelescopeApplication {
 	@RequestMapping(method = RequestMethod.GET, value = "/token/{id}")
     public String token(@PathVariable("id") String token) throws ExecutionException, InterruptedException {
         tokenManager.setToken(token);
-        System.out.println("token reçu : " + tokenManager.getToken());
+        logger.info("token reçu : " + tokenManager.getToken());
         ListenableFuture<StompSession> f = webSocketConfiguration.connect();
         stompSession = f.get();
 		webSocketConfiguration.subscribeGreetings(stompSession);
@@ -160,13 +166,13 @@ public class TelescopeApplication {
     public String recupId(@PathVariable("id") String id) throws IOException {
         FileOutputStream fos = null;
         File idRasp = new File(".openstars");
-        System.out.println("/register Chemin du fichier : " + idRasp.getAbsolutePath());
-        System.out.println(id);
+        logger.info("/register Chemin du fichier : " + idRasp.getAbsolutePath());
+        logger.info(id);
 
         if (!idRasp.exists())
         {
             try {
-                System.out.println("ID reçu : " + id);
+                logger.info("ID reçu : " + id);
                 BufferedWriter bw = new BufferedWriter(new FileWriter(idRasp));
                 PrintWriter pWriter = new PrintWriter(bw);
                 pWriter.print(id + "\n");
@@ -176,12 +182,12 @@ public class TelescopeApplication {
             }
         } else {
             try {
-                System.out.println("Le fichier existe déjà, voici ce qu'il contient :");
+                logger.info("Le fichier existe déjà, voici ce qu'il contient :");
                 BufferedReader br = new BufferedReader(new FileReader(idRasp));
                 String readId = br.readLine();
                 if (!readId.equals(id))
                 {
-                    System.out.println("Erreur : Les ID ne sont pas identique");
+                    logger.info("Erreur : Les ID ne sont pas identique");
                     idRasp.delete();
                     File newIdRasp = new File(".openstars");
                     BufferedWriter bw = new BufferedWriter(new FileWriter(newIdRasp));
@@ -189,7 +195,7 @@ public class TelescopeApplication {
                     pWriter.print(id + "\n");
                     pWriter.close();
                 }
-                System.out.println("/register ID : " + readId);
+                logger.info("/register ID : " + readId);
             } catch (IOException e) {
                 e.printStackTrace();
             }

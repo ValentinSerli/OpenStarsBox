@@ -38,6 +38,7 @@ public class TelescopeManager {
 		byte[] buffer = new byte[1024];
 		String retour = "L\n";
 			try {
+				System.out.println("Port série détecter : " + comSerie.getSerialPort());
 				comSerie.getSerialPort().getOutputStream().write(coord.getBytes());
 				boolean retourCoordComplet=false;
 				String reponseCoord="";
@@ -49,7 +50,7 @@ public class TelescopeManager {
 						reponseCoord += (char) buffer[0];
 						retourCoordComplet=reponseCoord.endsWith("#");
 						if (!reponseCoord.endsWith("#")){
-							return 2;
+//							return 2;
 						}
 					} else Thread.sleep(500);
 				}
@@ -67,7 +68,7 @@ public class TelescopeManager {
 							reponse += (char) buffer[0];
 							retourComplet=reponse.endsWith("#");
 							if (!reponse.endsWith("#")){
-								return 3;
+//								return 3;
 							}
 						} else Thread.sleep(500);
 					}

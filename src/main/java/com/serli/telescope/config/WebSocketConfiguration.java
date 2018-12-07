@@ -51,6 +51,8 @@ public class WebSocketConfiguration {
 
     public String mail;
 
+    public String id;
+
     public ListenableFuture<StompSession> connect() {
 
         Transport webSocketTransport = new WebSocketTransport(new StandardWebSocketClient());
@@ -81,7 +83,9 @@ public class WebSocketConfiguration {
 //        logger.info(base64);
         DecodedJWT jwt = JWT.decode(token);
         mail = jwt.getClaim("sub").asString();
+        id = jwt.getClaim("id").asString();
         logger.info(jwt.getClaim("sub").asString());
+        logger.info(jwt.getClaim("jti").asString());
 
         System.out.println("Token dans connectHeaders : " + connectHeaders.get("token"));
         return stompClient.connect(url, headers, connectHeaders, new MyHandler(), uri, 8080);
@@ -95,7 +99,7 @@ public class WebSocketConfiguration {
     }
 
     public void subscribeGreetings(StompSession stompSession) throws ExecutionException, InterruptedException {
-        stompSession.subscribe("/telescope/move", new StompFrameHandler() {
+        stompSession.subscribe("/telescope/move/" + mail, new StompFrameHandler() {
 
             public Type getPayloadType(StompHeaders stompHeaders) {
                 return Object.class;
@@ -152,8 +156,8 @@ public class WebSocketConfiguration {
                         try {
                             try {
                                 logger.info("Traitement manager : " + coord.getNomPlanete());
-//                            int retour = telescopeManager.move(coord.getNomPlanete(), coord.getCoord());
-                                int retour = 2;
+                                int retour = telescopeManager.move(coord.getNomPlanete(), coord.getCoord());
+//                                int retour = 1;
                                 switch (retour){
                                     case 0:
                                         Integer erreurGeneral = 5;
@@ -162,14 +166,15 @@ public class WebSocketConfiguration {
                                     case 1:
                                         Integer requeteTraitee = 1;
                                         stompSession.send(sendHeaders, new byte[]{requeteTraitee.byteValue(), userID.byteValue()});
-//                                        byte[] picture = camManager.takePicture();
-                                        byte[] picture2 = new byte[10];
-                                        picture2[1] = 12;
-                                        picture2[2] = 56;
-                                        picture2[3] = 48;
-                                        picture2[4] = 63;
-                                        picture2[5] = 120;
-                                        byte[] encoded = Base64.getEncoder().encode(picture2);
+                                        byte[] picture = camManager.takePicture();
+//                                        byte[] picture2 = new byte[10];
+//                                        picture2[1] = 12;
+//                                        picture2[2] = 56;
+//                                        picture2[3] = 48;
+//                                        picture2[4] = 63;
+//                                        picture2[5] = 120;
+//                                        byte[] encoded = Base64.getEncoder().encode(picture2);
+                                        byte[] encoded = Base64.getEncoder().encode(picture);
                                         logger.info("Envoie de l'image");
 
                                         logger.info("Taille de l'image 2 : " + encoded.length);
@@ -200,15 +205,15 @@ public class WebSocketConfiguration {
                     } else if (coordonnee.equals("photo")){
                         logger.info("demande de photo reçu");
                         try {
-                            byte[] picture2 = new byte[10];
-                            picture2[1] = 12;
-                            picture2[2] = 56;
-                            picture2[3] = 48;
-                            picture2[4] = 63;
-                            picture2[5] = 120;
-                            byte[] encoded = Base64.getEncoder().encode(picture2);
-//                        byte[] picture = camManager.takePicture();
-//                        byte[] encoded = Base64.getEncoder().encode(picture);
+//                            byte[] picture2 = new byte[10];
+//                            picture2[1] = 12;
+//                            picture2[2] = 56;
+//                            picture2[3] = 48;
+//                            picture2[4] = 63;
+//                            picture2[5] = 120;
+//                            byte[] encoded = Base64.getEncoder().encode(picture2);
+                            byte[] picture = camManager.takePicture();
+                            byte[] encoded = Base64.getEncoder().encode(picture);
                             stompSession.send(imageHeaders, encoded);
                         } catch (Exception e) {
                             e.printStackTrace();

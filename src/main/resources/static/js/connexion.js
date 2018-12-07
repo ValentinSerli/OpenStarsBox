@@ -50,15 +50,22 @@ function validForm(){
                     'token': token
                 }
             }).then((response) => {
+                if (response.status === 404 || response.status === 500){
+                    console.log("Erreur serveur")
+                }
                 return response.text();
                 console.log(response.text());
             }).then(ID => {
                 fetch("/register/" + ID);
                 console.log(ID);
                 fetch("/token/" + token);
+                if (response.status === 404 || response.status === 500){
+                    console.log("Erreur serveur")
+                } else {
+                    sleep(350);
+                    window.location.href = "/id";
+                }
 
-                sleep(350);
-                window.location.href = "/id";
                 })
             })
     }

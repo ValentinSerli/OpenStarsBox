@@ -1,9 +1,11 @@
 package com.serli.telescope.manager;
 
-import com.serli.telescope.serie.comSerie;
+import com.serli.telescope.config.WebSocketConfiguration;
+import com.serli.telescope.serie.ComSerie;
 
 import java.io.IOException;
 
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 /**
@@ -25,6 +27,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class TelescopeManager {
 
+    private static org.slf4j.Logger logger = LoggerFactory.getLogger(WebSocketConfiguration.class);
 
 	/**
 	 * Méthode telescope qui intéragie avec le télescope
@@ -38,13 +41,13 @@ public class TelescopeManager {
 		byte[] buffer = new byte[1024];
 		String retour = "L\n";
 			try {
-				System.out.println("Port série détecter : " + comSerie.getSerialPort());
-				comSerie.getSerialPort().getOutputStream().write(coord.getBytes());
+				logger.info("Port série détecter : " + ComSerie.getSerialPort());
+				ComSerie.getSerialPort().getOutputStream().write(coord.getBytes());
 				boolean retourCoordComplet=false;
 				String reponseCoord="";
 				// Vérifie si le Télescope à bien reçu les coordonnées
 				while (!retourCoordComplet) {
-					int nbLu= comSerie.getSerialPort().getInputStream().read(buffer,0,1);
+					int nbLu= ComSerie.getSerialPort().getInputStream().read(buffer,0,1);
 					if (nbLu>0)
 					{
 						reponseCoord += (char) buffer[0];
@@ -54,15 +57,14 @@ public class TelescopeManager {
 						}
 					} else Thread.sleep(500);
 				}
-				System.out.println("reponse coord : "+reponseCoord);
-				System.out.println();
+				logger.info("reponse coord : "+reponseCoord + "\n");
 				// Vérifie si le télescope à bien fini sont déplacement
 				while(!finDeplacement) {
-					comSerie.getSerialPort().getOutputStream().write(retour.getBytes());
+					ComSerie.getSerialPort().getOutputStream().write(retour.getBytes());
 					boolean retourComplet=false;
 					String reponse="";
 					while (!retourComplet) {
-						int nbLu= comSerie.getSerialPort().getInputStream().read(buffer,0,1);
+						int nbLu= ComSerie.getSerialPort().getInputStream().read(buffer,0,1);
 						if (nbLu>0)
 						{
 							reponse += (char) buffer[0];
@@ -72,11 +74,10 @@ public class TelescopeManager {
 							}
 						} else Thread.sleep(500);
 					}
-					System.out.println("reponse interrogation depl : "+reponse);
-					System.out.println();
+					logger.info("reponse interrogation depl : " + reponse + "\n");
 					if (reponse.startsWith("0#"))
 					{
-						System.out.println("Stop");
+						logger.info("Stop");
 						finDeplacement = true;
 
 					} else Thread.sleep(500);

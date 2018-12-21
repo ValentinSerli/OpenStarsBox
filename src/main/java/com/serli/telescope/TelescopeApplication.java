@@ -2,7 +2,6 @@ package com.serli.telescope;
 
 import com.serli.telescope.config.WebSocketConfiguration;
 import com.serli.telescope.manager.TokenManager;
-import com.serli.telescope.serie.comSerie;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
@@ -21,7 +20,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.view.RedirectView;
 
 import java.io.*;
-import java.net.UnknownHostException;
 import java.util.concurrent.ExecutionException;
 
 @EnableScheduling
@@ -49,8 +47,8 @@ public class TelescopeApplication {
         /**
          * Connexion au port série
          */
-        comSerie comSerie = new comSerie();
-        comSerie.connect("/dev/ttyUSB0");
+//        ComSerie ComSerie = new ComSerie();
+//        ComSerie.connect("/dev/ttyUSB0");
 
 	}
 

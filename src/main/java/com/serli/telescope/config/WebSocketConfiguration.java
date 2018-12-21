@@ -66,16 +66,12 @@ public class WebSocketConfiguration {
         sockJsClient.setHttpHeaderNames("token", tokenManager.getToken());
         String[] header = sockJsClient.getHttpHeaderNames();
 
-        System.out.println("token dans getToken : " + tokenManager.getToken());
         headers.add("token", tokenManager.getToken());
 
         StompHeaders connectHeaders = new StompHeaders();
         connectHeaders.add("token", tokenManager.getToken());
 
-        for (int i = 0; i < header.length; i++)
-        {
-            System.out.println("Headers présent : " + header[i]);
-        }
+
         String token = tokenManager.getToken();
 
 //        String base64Url = token.split(".")[0];
@@ -84,10 +80,10 @@ public class WebSocketConfiguration {
         DecodedJWT jwt = JWT.decode(token);
         mail = jwt.getClaim("sub").asString();
         id = jwt.getClaim("id").asString();
-        logger.info(jwt.getClaim("sub").asString());
-        logger.info(jwt.getClaim("jti").asString());
+        logger.info("Id user : " + jwt.getClaim("sub").asString());
+        logger.info("Mail user : " + jwt.getClaim("jti").asString());
 
-        System.out.println("Token dans connectHeaders : " + connectHeaders.get("token"));
+        logger.info("Token dans connectHeaders : " + connectHeaders.get("token"));
         return stompClient.connect(url, headers, connectHeaders, new MyHandler(), uri, 8080);
 
     }
@@ -106,11 +102,11 @@ public class WebSocketConfiguration {
             }
 
             public void handleFrame(StompHeaders stompHeaders, Object o) {
-                System.out.println("Connecter : " + stompSession.isConnected());
+                logger.info("Connecter : " + stompSession.isConnected());
 
                 StompHeaders sendHeaders = new StompHeaders();
                 sendHeaders.add("token", tokenManager.getToken());
-                System.out.println("Token dans sendHeaders : " + sendHeaders.get("token"));
+                logger.info("Token dans sendHeaders : " + sendHeaders.get("token"));
                 sendHeaders.setDestination("/app/move/etat");
 
                 StompHeaders imageHeaders = new StompHeaders();
@@ -166,15 +162,15 @@ public class WebSocketConfiguration {
                                     case 1:
                                         Integer requeteTraitee = 1;
                                         stompSession.send(sendHeaders, new byte[]{requeteTraitee.byteValue(), userID.byteValue()});
-                                        byte[] picture = camManager.takePicture();
-//                                        byte[] picture2 = new byte[10];
-//                                        picture2[1] = 12;
-//                                        picture2[2] = 56;
-//                                        picture2[3] = 48;
-//                                        picture2[4] = 63;
-//                                        picture2[5] = 120;
-//                                        byte[] encoded = Base64.getEncoder().encode(picture2);
-                                        byte[] encoded = Base64.getEncoder().encode(picture);
+//                                        byte[] picture = camManager.takePicture();
+                                        byte[] picture2 = new byte[10];
+                                        picture2[1] = 12;
+                                        picture2[2] = 56;
+                                        picture2[3] = 48;
+                                        picture2[4] = 63;
+                                        picture2[5] = 120;
+                                        byte[] encoded = Base64.getEncoder().encode(picture2);
+//                                        byte[] encoded = Base64.getEncoder().encode(picture);
                                         logger.info("Envoie de l'image");
 
                                         logger.info("Taille de l'image 2 : " + encoded.length);
@@ -205,15 +201,15 @@ public class WebSocketConfiguration {
                     } else if (coordonnee.equals("photo")){
                         logger.info("demande de photo reçu");
                         try {
-//                            byte[] picture2 = new byte[10];
-//                            picture2[1] = 12;
-//                            picture2[2] = 56;
-//                            picture2[3] = 48;
-//                            picture2[4] = 63;
-//                            picture2[5] = 120;
-//                            byte[] encoded = Base64.getEncoder().encode(picture2);
-                            byte[] picture = camManager.takePicture();
-                            byte[] encoded = Base64.getEncoder().encode(picture);
+                            byte[] picture2 = new byte[10];
+                            picture2[1] = 12;
+                            picture2[2] = 56;
+                            picture2[3] = 48;
+                            picture2[4] = 63;
+                            picture2[5] = 120;
+                            byte[] encoded = Base64.getEncoder().encode(picture2);
+//                            byte[] picture = camManager.takePicture();
+//                            byte[] encoded = Base64.getEncoder().encode(picture);
                             stompSession.send(imageHeaders, encoded);
                         } catch (Exception e) {
                             e.printStackTrace();
@@ -238,22 +234,22 @@ public class WebSocketConfiguration {
         @Override
         public void handleTransportError(StompSession stompSession, Throwable throwable) {
             if (throwable instanceof ConnectionLostException) {
-                System.out.println("Déconnecter");
+                logger.info("Déconnecter");
                 timer.schedule(new TimerTask() {
                     @Override
                     public void run() {
                         try {
                             ListenableFuture<StompSession> connect = stompClient.connect(url, headers, new MyHandler(), uri, 8080);
-                            System.out.println("Tentative de reconnexion");
+                            logger.info("Tentative de reconnexion");
                             StompSession stompSession1 = connect.get();
-                            System.out.println("connecter : " + stompSession1.isConnected());
+                            logger.info("connecter : " + stompSession1.isConnected());
                             subscribeGreetings(stompSession1);
-                            System.out.println("Reconnexion réussi");
+                            logger.info("Reconnexion réussi");
                             timer.cancel();
                             Thread.currentThread().interrupt();
                             timer = new Timer();
                         } catch (Exception e) {
-                            System.out.println("Echec reconnexion");
+                            logger.info("Echec reconnexion");
                             e.printStackTrace();
                         }
                     }

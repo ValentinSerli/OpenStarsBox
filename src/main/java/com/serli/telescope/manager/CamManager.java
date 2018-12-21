@@ -25,8 +25,8 @@ public class CamManager {
     public byte[] takePicture() throws IOException {
         List<Webcam> webcamList = Webcam.getWebcams();
         Webcam webcam2 = Webcam.getDefault();
-        System.out.println("Liste de webcam : " + webcamList);
-        System.out.println("Webcam par default : " + webcam2);
+        logger.info("Liste de webcam : " + webcamList);
+        logger.info("Webcam par default : " + webcam2);
         Webcam webcam = null;
         if (webcamList != null && webcamList.size() > 0)
         {
@@ -38,16 +38,16 @@ public class CamManager {
                 webcam.open();
             }
 
-            System.out.println(webcam.getName());
+            logger.info(webcam.getName());
 
             BufferedImage image = webcam.getImage();
 
-            System.out.println("Image capturé");
+            logger.info("Image capturé");
 
 
             ImageIO.write(image, "PNG", baos);
             baos.flush();
-            System.out.println("Image enregistrer");
+            logger.info("Image enregistrer");
 //            String tabImage = "";
 //            byte[] imageByte = baos.toByteArray();
 //            for (int i = 0; i < baos.size(); i++)
@@ -64,7 +64,7 @@ public class CamManager {
             }
         }
 
-        System.out.println("Image prise");
+        logger.info("Image prise");
 
         return null;
 
